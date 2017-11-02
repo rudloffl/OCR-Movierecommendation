@@ -17,9 +17,9 @@ from sklearn.cluster import KMeans
 
 def recommendation(movieid):
 
-    labels = np.genfromtxt('labelskmean.csv', delimiter=',')
-    X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
-    datasettitle = pd.read_csv('movie-info.csv', sep=",")
+    #labels = np.genfromtxt('labelskmean.csv', delimiter=',')
+    #X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
+    #datasettitle = pd.read_csv('movie-info.csv', sep=",")
     
     numrecommendation = 5
 
@@ -79,6 +79,7 @@ def recommendation(movieid):
     return {'_results':results}
 
 def allmovies():
+    #datasettitle = pd.read_csv('movie-info.csv', sep=",")
     toreturn = ''
     for IDmovie in datasettitle.index:
         title = datasettitle.loc[IDmovie]['movie_title']
@@ -93,11 +94,17 @@ def allmovies():
     return toreturn
 
 
-
-
+labels = np.genfromtxt('labelskmean.csv', delimiter=',')
+X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
+datasettitle = pd.read_csv('movie-info.csv', sep=",")
 
 
 app = Flask(__name__)
+
+@app.route('/init')
+def init():
+    return 'init done'
+
 
 @app.route('/')
 def index():
@@ -112,6 +119,7 @@ def recommendmovie(movieid):
     return jsonify(recommendation(int(movieid)))
 
 
-if __name__ == '__main__':
+test = Test('asfdds')
 
+if __name__ == '__main__':
     app.run(debug=True)
