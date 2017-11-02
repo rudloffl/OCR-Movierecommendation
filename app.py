@@ -52,7 +52,7 @@ def recommendation(movieid):
     df = df.drop('ID', axis = 1)
     df = df.sort_values('distance')
 
-    counter = 0
+    counter = 1
     results = []
 
     #print('\n##### SUGGESTIONS FOR {} #####\n'.format(datasettitle.loc[movieid]))
@@ -112,5 +112,5 @@ if __name__ == '__main__':
     labels = np.genfromtxt('labelskmean.csv', delimiter=',')
     X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
     datasettitle = pd.read_csv('movie-info.csv', sep=",")
-    print(recommendation(int(1)))
-    #app.run(debug=True)
+    #print(recommendation(int(1)))
+    app.run(debug=True)
