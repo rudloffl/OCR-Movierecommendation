@@ -17,6 +17,10 @@ from sklearn.cluster import KMeans
 
 def recommendation(movieid):
 
+    labels = np.genfromtxt('labelskmean.csv', delimiter=',')
+    X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
+    datasettitle = pd.read_csv('movie-info.csv', sep=",")
+    
     numrecommendation = 5
 
 
@@ -109,8 +113,6 @@ def recommendmovie(movieid):
 
 
 if __name__ == '__main__':
-    labels = np.genfromtxt('labelskmean.csv', delimiter=',')
-    X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
-    datasettitle = pd.read_csv('movie-info.csv', sep=",")
+
     #print(recommendation(int(1)))
     app.run(debug=True)
