@@ -8,7 +8,8 @@ from flask import Flask
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-#import json
+from sklearn import preprocessing
+from sklearn import decomposition
 from flask import jsonify
 from sklearn.cluster import KMeans
 
@@ -16,23 +17,18 @@ from sklearn.cluster import KMeans
 
 
 def recommendation(movieid):
-
-    #labels = np.genfromtxt('labelskmean.csv', delimiter=',')
-    #X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
-    #datasettitle = pd.read_csv('movie-info.csv', sep=",")
     
     numrecommendation = 5
 
 
     #Converts the movieid in np.array code
-    arrayid = datasettitle.index.get_loc(movieid)
+    try:
+        arrayid = datasettitle.index.get_loc(movieid)
+    except:
+        return 'The ID is not existing in the dataset'
 
-    #Clustering Kmeans
-    numcluster = 20
 
 
-    kmeans = KMeans(n_clusters=numcluster)
-    kmeans.fit(X_projected)
 
     cluster = kmeans.predict(X_projected[arrayid].reshape(1, -1))[0]
 
@@ -59,64 +55,97 @@ def recommendation(movieid):
     counter = 1
     results = []
 
-    #print('\n##### SUGGESTIONS FOR {} #####\n'.format(datasettitle.loc[movieid]))
+    print('\n##### SUGGESTIONS FOR {} #####\n'.format(datasettitle.loc[movieid]))
 
     #Movie ID
     for IDmovie in df.index[:numrecommendation]:
-        title = datasettitle.loc[IDmovie]['movie_title']
+        title = datasettitle.loc[IDmovie]
         title = title.replace(u'\xa0', u'')
         while title[0] == ' ':
             title = title[1:]
         while title[-1] == ' ':
             title = title[:-1]
-        #print('### SUGGESTION {} ###'.format(counter))
-        #print('{} - {}'.format(IDmovie, title))
+        print('### SUGGESTION {} ###'.format(counter))
+        print('{} - {}'.format(IDmovie, title))
         distance = df['distance'].loc[IDmovie]
-        #print('distance = {}\n'.format(distance))
+        print('distance = {}\n'.format(distance))
         results.append({'id': int(IDmovie) , 'name': title})
         counter += 1
-    #print(results)
     return {'_results':results}
 
 def allmovies():
-    #datasettitle = pd.read_csv('movie-info.csv', sep=",")
     toreturn = ''
     for IDmovie in datasettitle.index:
-        title = datasettitle.loc[IDmovie]['movie_title']
+        title = datasettitle.loc[IDmovie]
         title = title.replace(u'\xa0', u'')
         while title[0] == ' ':
             title = title[1:]
         while title[-1] == ' ':
             title = title[:-1]
-        year = datasettitle.loc[IDmovie]['title_year']
-        newline = 'ID:{} - Year:{} - title:{} /n'.format(IDmovie, year, title)
+        newline = 'ID : {:0004d}  <-->  title : {} <br/>'.format(IDmovie, title)
         toreturn = toreturn + newline
     return toreturn
 
 
-labels = np.genfromtxt('labelskmean.csv', delimiter=',')
-X_projected = np.genfromtxt('pcaresult.csv', delimiter=',')
-datasettitle = pd.read_csv('movie-info.csv', sep=",")
+#dataset loading
+dataset = pd.read_csv('movie_metadata_cleaned.csv', sep=",")
+dataset.set_index('Unnamed: 0', inplace=True)
+datasettitle = dataset['movie_title']
+dataset = dataset.fillna(-1)
+dataset = dataset.drop('movie_title', axis=1)
+
+#PCA creation
+tostudy = []
+tostudy.extend([x for x in dataset.columns.values if x.endswith('code')])
+tostudy.extend([x for x in dataset.columns.values if x.endswith('likes')])
+tostudy.extend([x for x in dataset.columns.values if x.startswith('keyword-')])
+tostudy.extend([x for x in dataset.columns.values if x.startswith('gen-')])
+tostudy.extend([x for x in dataset.columns.values if x.startswith('movie-')])
+tostudy.extend([x for x in dataset.columns.values if x.startswith('money-')])
+tostudy.extend([x for x in dataset.columns.values if x.startswith('title-')])
+tostudy.extend(['num_user_for_reviews', 'num_voted_users', 'facenumber_in_poster', 'num_critic_for_reviews', 'imdb_score'])
+tostudy.extend([ 'duration', 'numrating', 'title_year', 'style-color'])
+Components = 90
+
+#Data centering
+X  = dataset[tostudy]
+std_scale = preprocessing.StandardScaler().fit(X)
+X_scaled = std_scale.transform(X)
+pca = decomposition.PCA(n_components=Components)
+pca.fit(X_scaled)
+
+# projeter X sur les composantes principales
+X_projected = pca.transform(X_scaled)
+
+
+#Clustering Kmeans
+numcluster = 20
+kmeans = KMeans(n_clusters=numcluster)
+kmeans.fit(X_projected)
+labels = kmeans.labels_
+
+
+
 
 
 app = Flask(__name__)
 
-@app.route('/init')
-def init():
-    return 'init done'
 
 
 @app.route('/')
 def index():
-    return "Hello world !"
+    return "Welcome to the movie recommendation system please use the recommendation tool or listmovies"
 
-@app.route('/all')
+@app.route('/listmovies')
 def listmovies():
     return allmovies()
 
 @app.route('/recommend/<movieid>')
 def recommendmovie(movieid):
-    return jsonify(recommendation(int(movieid)))
+    try:
+        return jsonify(recommendation(int(movieid)))
+    except:
+        return 'Make sure to use an integer to identify the movie'
 
 
 if __name__ == '__main__':
