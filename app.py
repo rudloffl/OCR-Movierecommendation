@@ -119,7 +119,5 @@ def recommendmovie(movieid):
     return jsonify(recommendation(int(movieid)))
 
 
-test = Test('asfdds')
-
 if __name__ == '__main__':
     app.run(debug=True)
