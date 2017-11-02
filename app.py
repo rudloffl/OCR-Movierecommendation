@@ -114,5 +114,4 @@ def recommendmovie(movieid):
 
 if __name__ == '__main__':
 
-    #print(recommendation(int(1)))
     app.run(debug=True)
