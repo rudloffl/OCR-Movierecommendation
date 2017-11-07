@@ -8,10 +8,8 @@ from flask import Flask
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-from sklearn import preprocessing
-from sklearn import decomposition
 from flask import jsonify
-from sklearn.cluster import KMeans
+
 
 
 
@@ -30,10 +28,10 @@ def recommendation(movieid):
 
 
 
-    cluster = kmeans.predict(X_projected[arrayid].reshape(1, -1))[0]
+    cluster = datalabels[movieid]
 
     #array ID for predictions
-    candidates = [index for index, clust in enumerate(labels)if clust == cluster and index != arrayid]
+    candidates = [index for index, clust in enumerate(datalabels.values) if clust == cluster and index != arrayid]
 
 
     moviedist = []
@@ -59,7 +57,7 @@ def recommendation(movieid):
 
     #Movie ID
     for IDmovie in df.index[:numrecommendation]:
-        title = datasettitle.loc[IDmovie]
+        title = datasettitle[IDmovie]
         title = title.replace(u'\xa0', u'')
         while title[0] == ' ':
             title = title[1:]
@@ -88,43 +86,10 @@ def allmovies():
 
 
 #dataset loading
-dataset = pd.read_csv('movie_metadata_cleaned.csv', sep=",")
-dataset.set_index('Unnamed: 0', inplace=True)
-datasettitle = dataset['movie_title']
-dataset = dataset.fillna(-1)
-dataset = dataset.drop('movie_title', axis=1)
-
-#PCA creation
-tostudy = []
-tostudy.extend([x for x in dataset.columns.values if x.endswith('code')])
-tostudy.extend([x for x in dataset.columns.values if x.endswith('likes')])
-tostudy.extend([x for x in dataset.columns.values if x.startswith('keyword-')])
-tostudy.extend([x for x in dataset.columns.values if x.startswith('gen-')])
-tostudy.extend([x for x in dataset.columns.values if x.startswith('movie-')])
-tostudy.extend([x for x in dataset.columns.values if x.startswith('money-')])
-tostudy.extend([x for x in dataset.columns.values if x.startswith('title-')])
-tostudy.extend(['num_user_for_reviews', 'num_voted_users', 'facenumber_in_poster', 'num_critic_for_reviews', 'imdb_score'])
-tostudy.extend([ 'duration', 'numrating', 'title_year', 'style-color'])
-Components = 90
-
-#Data centering
-X  = dataset[tostudy]
-std_scale = preprocessing.StandardScaler().fit(X)
-X_scaled = std_scale.transform(X)
-pca = decomposition.PCA(n_components=Components)
-pca.fit(X_scaled)
-
-# projeter X sur les composantes principales
-X_projected = pca.transform(X_scaled)
-
-
-#Clustering Kmeans
-numcluster = 20
-kmeans = KMeans(n_clusters=numcluster)
-kmeans.fit(X_projected)
-labels = kmeans.labels_
-
-
+dataapi = pd.read_csv('dataapi.csv', sep=',', index_col = 0)
+datasettitle = dataapi['movie_title']
+datalabels = dataapi['Labels']
+X_projected = dataapi.drop(['movie_title', 'Labels'],axis = 1).values
 
 
 
@@ -150,3 +115,4 @@ def recommendmovie(movieid):
 
 if __name__ == '__main__':
     app.run(debug=True)
+    #recommendation(1)
